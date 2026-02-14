@@ -34,22 +34,21 @@ public class WalletServiceImpl implements WalletService {
     public void processOperation(WalletOperationRequest request) {
         validateAmount(request.getAmount());
 
-        Wallet wallet = walletRepository.findForUpdateById(request.getWalletId())
-                .orElseThrow(() -> new WalletNotFoundException(request.getWalletId()));
+        if (!walletRepository.existsById(request.getWalletId())) {
+            throw new WalletNotFoundException(request.getWalletId());
+        }
 
         switch (request.getOperationType()) {
-            case DEPOSIT ->
-                    wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+            case DEPOSIT -> walletRepository.deposit(request.getWalletId(), request.getAmount());
             case WITHDRAW -> {
-                if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
-                    throw new InsufficientFundsException(request.getWalletId(), request.getAmount(), wallet.getBalance());
+                int updatedRows = walletRepository.withdraw(request.getWalletId(), request.getAmount());
+                if (updatedRows == 0) {
+                    BigDecimal currentBalance = getBalance(request.getWalletId());
+                    throw new InsufficientFundsException(request.getWalletId(), request.getAmount(), currentBalance);
                 }
-                wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
             }
             default -> throw new IllegalArgumentException("Unknown operation type: " + request.getOperationType());
         }
-
-        walletRepository.save(wallet);
     }
 
     @Override
