@@ -1,0 +1,22 @@
+version: '3.8'
+
+networks:
+  wallet-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: wallet-postgres
+    environment:
+      POSTGRES_DB: wallet_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wallet-network
+volumes:
+  postgres_data:
