@@ -9,14 +9,30 @@ services:
     image: postgres:13
     container_name: wallet-postgres
     environment:
-      POSTGRES_DB: wallet_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - wallet-network
+
+  wallet-app:
+    build: .
+    container_name: wallet-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${SERVER_PORT}:8080"
+    depends_on:
+      - postgres
+    networks:
+      - wallet-network
+
+
 volumes:
   postgres_data:
